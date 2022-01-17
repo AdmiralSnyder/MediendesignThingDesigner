@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -42,15 +43,15 @@ namespace MediendesignThingDesigner
             }
         }
 
-        private SolidColorBrush YellowBrush = new(Colors.Yellow);
-        private SolidColorBrush BlackBrush = new(Colors.Black);
+        private SolidColorBrush YellowBrush = new(Colors.Black);
+        private SolidColorBrush BlackBrush = new(Colors.White);
 
         private void ToggleColors(Shape shape) => shape.Fill = shape.Fill == YellowBrush ? BlackBrush : YellowBrush;
 
         private void FillWithTriangles(object sender, RoutedEventArgs e)
         {
-            var rect = new Rectangle() { Width = 300, Height = 300, Tag = new Point(0, 0) };
-            var rects = SplitRectHorz(rect, 4);
+            var rect = new Rectangle() { Width = 1600, Height = 800, Tag = new Point(0, 0) };
+            var rects = SplitRectHorz(rect, 8);
             rects = rects.SelectMany(r => SplitRectVert(r, 4));
             var tris = rects.SelectMany(SplitRectIntoTriangles);
             Draw(tris);
@@ -68,13 +69,13 @@ namespace MediendesignThingDesigner
 
         private void Draw(Shape shape)
         {
-            shape.Fill = new SolidColorBrush(Colors.Black);
-            shape.Stroke = new SolidColorBrush(Colors.White);
+            shape.Fill = BlackBrush;
+            shape.Stroke = new SolidColorBrush(Colors.Green);
             var location = (Point)shape.Tag;
             Canvas.SetLeft(shape, location.X);
             Canvas.SetTop(shape, location.Y);
             ApplyBehaviour(shape);
-            DrawingCanvas.Children.Add(shape);
+            TheCanvas.Children.Add(shape);
             //rect.Visibility = Visibility.Visible;
         }
 
@@ -131,5 +132,20 @@ namespace MediendesignThingDesigner
         }
 
         private Rectangle CreateRect(double x, double y, double width, double height) => new Rectangle() { Width = width, Height = height, Tag = new Point(x, y) };
+
+        private void SaveB_Click(object sender, RoutedEventArgs e)
+        {
+            var r = new SVGRenderer(1600d, 800d);
+            r.Begin();
+            foreach (Shape shape in TheCanvas.Children)
+            {
+                r.DrawShape(shape);
+            }
+
+            r.End();
+            using var file = File.OpenWrite(@"C:\temp\tempSvg.svg");
+            r.SVGDocument.Position = 0;
+            r.SVGDocument.WriteTo(file);
+        }
     }
 }
